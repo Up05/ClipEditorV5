@@ -1,23 +1,12 @@
-import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+
 class Colors {
     public static final Color
         BIN         = new Color(115, 6, 7),
@@ -38,7 +27,7 @@ class Colors {
         CONTROLSC   = new Color(125, 102, 94),
         SLIDERSC    = CONTROLSC,
 
-    TEXT        = new Color(241, 226, 197);
+        TEXT        = new Color(241, 226, 197);
 
 }
 public class Window {
@@ -68,7 +57,7 @@ public class Window {
 
     // Keybinds for everything! like WASD, ' ', Q, E for bad good, R -- unmute
 
-    public static void init() throws UnsupportedLookAndFeelException, ClassNotFoundException, InstantiationException, IllegalAccessException {
+    public static void init() {
 
         frame = new JFrame("Clip Editor v5");
         frame.setSize(1280, 720);
@@ -116,10 +105,6 @@ public class Window {
         add.setBackground(Colors.ADD);
         finish.setBackground(Colors.FINISH);
 
-//        bin.setBorder(BorderFactory.createLineBorder(new Color(120, 120, 120)));
-//        add.setBorder(BorderFactory.createLineBorder(new Color(120, 120, 120)));
-//        finish.setBorder(BorderFactory.createLineBorder(new Color(120, 120, 120)));
-
         bin.setBorderPainted(false);
         add.setBorderPainted(false);
         finish.setBorderPainted(false);
@@ -148,8 +133,6 @@ public class Window {
 
         for (JButton control : controls) frame.add(control);
 
-//        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
         frame.addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 setLayout();
@@ -161,24 +144,10 @@ public class Window {
 
         frame.setVisible(true);
 
-//        vpanel.mediaPlayer().media().startPaused("a.mp4");
-//        vpanel.mediaPlayer().controls().play();
-
         setLayout();
 
         frame.revalidate();
 
-    }
-
-    // from: https://stackoverflow.com/questions/7434845/setting-the-default-font-of-swing-program
-    public static void setUIFont (javax.swing.plaf.FontUIResource f){
-        java.util.Enumeration keys = UIManager.getLookAndFeelDefaults().keys();
-        while (keys.hasMoreElements()) {
-            Object key = keys.nextElement();
-            Object value = UIManager.get (key);
-            if (value instanceof javax.swing.plaf.FontUIResource)
-                UIManager.put (key, f);
-        }
     }
 
     public static void setLayout(){
@@ -218,10 +187,15 @@ public class Window {
                 },
                 0, 250, TimeUnit.MILLISECONDS
             );
-
         bin.addActionListener(e -> Output.bin());
         add.addActionListener(e -> Output.add());
-        finish.addActionListener(e -> Main.shouldFinish = true);
+        finish.addActionListener(e -> {
+            Main.shouldFinish = !Main.shouldFinish;
+            if(Main.shouldFinish)
+                finish.setFont(new Font("Lucon", Font.BOLD, 36));
+            else
+                finish.setFont(new Font("Lucon", Font.PLAIN, 36));
+        });
         controls[0].addActionListener(e -> vpanel.mediaPlayer().controls().setRate(playbackRate -= 0.1f));
         controls[1].addActionListener(e -> vpanel.mediaPlayer().controls().skipTime(-2000));
         controls[2].addActionListener(e -> {
@@ -304,6 +278,9 @@ public class Window {
     public static void update(String video_path){
         allow_editor_end_skip = false;
 
+        editor_start.setSnapToTicks(false);
+        editor_end.setSnapToTicks(false);
+
         if(video_path == null || video_path.isEmpty()) {
             vpanel.mediaPlayer().media().startPaused("");
             return;
@@ -322,19 +299,23 @@ public class Window {
                 Dimension original = vpanel.mediaPlayer().video().videoDimension();
                 vpanel.mediaPlayer().video().setScale((float) Math.min(vwidth / original.getWidth(), vheight / original.getHeight())); // 0.5 is for 1280x720
                 playback.setMaximum((int) vpanel.mediaPlayer().status().length());
-                playback.setMinorTickSpacing(playback.getMaximum() / 1000);
 
                 editor_start.setMinimum(0);
                 editor_start.setMaximum((int) vpanel.mediaPlayer().status().length());
-                editor_start.setMinorTickSpacing(editor_start.getMaximum() / 1000);
                 editor_start.setValue(0);
-                editor_start.setValueIsAdjusting(true);
 
                 editor_end.setMinimum(0);
                 editor_end.setMaximum((int) vpanel.mediaPlayer().status().length());
-                editor_end.setMinorTickSpacing(editor_end.getMaximum() / 1000);
                 editor_end.setValue(editor_end.getMaximum());
-                editor_end.setValueIsAdjusting(true);
+
+                editor_start.setMinorTickSpacing(1000);
+                editor_start.setMajorTickSpacing(1000);
+                editor_start.setSnapToTicks(true);
+
+                editor_end.setMinorTickSpacing(1000);
+                editor_end.setMajorTickSpacing(1000);
+                editor_end.setSnapToTicks(true);
+
             }
         });
 
