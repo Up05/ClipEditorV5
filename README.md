@@ -2,7 +2,7 @@
 A basic, but fast video editor made specifically for rummaging through a tone of shadowplay clips.
 
 # Gets rid of sound!   
-*Yes, I never managed to set up virtual audio cables or whatever they are called...*
+*Yes, I never managed to set up working virtual audio cables...*
 
 Meant for Windows. Uses ffmpeg, if you've installed it somewhere weird, please update the path in `Output#add()` `"C:/ProgramData/chocolatey/bin/ffmpeg.exe"`
 
